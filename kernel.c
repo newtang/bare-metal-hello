@@ -7,8 +7,8 @@
 #endif
 #include <stddef.h>
 #include <stdint.h>
-
 #include "descriptor_tables.h"
+#include "gdt.s"
 
 // Lets us access our ASM functions from our C code.
 extern void gdt_flush(u32int);
