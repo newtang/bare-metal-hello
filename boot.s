@@ -94,3 +94,14 @@ _start:
 # Set the size of the _start symbol to the current location '.' minus its start.
 # This is useful when debugging or when you implement call tracing.
 .size _start, . - _start
+
+
+#; Loads the IDT defined in '_idtp' into the processor.
+#; This is declared in C as 'extern void idt_load();'
+#global _idt_load
+#extern _idtp
+#_idt_load:
+#    lidt [_idtp]
+#    ret
+	
+
