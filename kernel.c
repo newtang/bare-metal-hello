@@ -1,4 +1,5 @@
 //from http://wiki.osdev.org/Bare_Bones
+//also from http://raw.knusbaum.com/jamesmolloy/tutorial_html/4.-The%20GDT%20and%20IDT.html
 
 /* Surely you will remove the processor conditionals and this comment
    appropriately depending on whether or not you use C++. */
