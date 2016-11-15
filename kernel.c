@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "descriptor_tables.h"
+#include "isr.h"
 
 
 // Lets us access our ASM functions from our C code.
@@ -234,6 +235,13 @@ static void init_idt()
 
    idt_flush((uint32_t)&idt_ptr);
 }
+
+void isr_handler(registers_t regs)
+{
+   terminal_writestring("recieved interrupt: ");
+   //monitor_write_dec(regs.int_no);
+   //monitor_put('\n');
+}
  
 #if defined(__cplusplus)
 extern "C" /* Use C linkage for kernel_main. */
@@ -247,4 +255,7 @@ void kernel_main(void) {
  
 	/* Newline support is left as an exercise. */
 	terminal_writestring("Hello, kernel World!\n\ntest");
+
+	//asm volatile ("int $0x3");
+	//asm volatile ("int $0x4");
 }
