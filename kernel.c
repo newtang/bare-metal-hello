@@ -9,6 +9,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "descriptor_tables.h"
+#include "terminal.h"
+#include "utils.h"
 #include "isr.h"
 
 
@@ -39,98 +41,8 @@ idt_ptr_t   idt_ptr;
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
  
-/* Hardware text mode color constants. */
-enum vga_color {
-	VGA_COLOR_BLACK = 0,
-	VGA_COLOR_BLUE = 1,
-	VGA_COLOR_GREEN = 2,
-	VGA_COLOR_CYAN = 3,
-	VGA_COLOR_RED = 4,
-	VGA_COLOR_MAGENTA = 5,
-	VGA_COLOR_BROWN = 6,
-	VGA_COLOR_LIGHT_GREY = 7,
-	VGA_COLOR_DARK_GREY = 8,
-	VGA_COLOR_LIGHT_BLUE = 9,
-	VGA_COLOR_LIGHT_GREEN = 10,
-	VGA_COLOR_LIGHT_CYAN = 11,
-	VGA_COLOR_LIGHT_RED = 12,
-	VGA_COLOR_LIGHT_MAGENTA = 13,
-	VGA_COLOR_LIGHT_BROWN = 14,
-	VGA_COLOR_WHITE = 15,
-};
- 
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
-	return fg | bg << 4;
-}
- 
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
-	return (uint16_t) uc | (uint16_t) color << 8;
-}
- 
-size_t strlen(const char* str) {
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
-}
- 
-static const size_t VGA_WIDTH = 80;
-static const size_t VGA_HEIGHT = 25;
- 
-size_t terminal_row;
-size_t terminal_column;
-uint8_t terminal_color;
-uint16_t* terminal_buffer;
 
 
-
-void terminal_initialize(void) {
-	terminal_row = 0;
-	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_RED);
-	terminal_buffer = (uint16_t*) 0xB8000;
-	for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		for (size_t x = 0; x < VGA_WIDTH; x++) {
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
-	}
-
-	terminal_buffer[30] = vga_entry(' ', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_LIGHT_GREEN));
-}
- 
-void terminal_setcolor(uint8_t color) {
-	terminal_color = color;
-}
- 
-void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
-	const size_t index = y * VGA_WIDTH + x;
-	terminal_buffer[index] = vga_entry(c, color);
-}
- 
-void terminal_putchar(char c) {
-	if (c == '\n'){
-		++terminal_row;
-		terminal_column = 0;
-		return;
-	}
-	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == VGA_WIDTH) {
-		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
-	}
-}
- 
-void terminal_write(const char* data) {
-	size_t size = strlen(data);
-	for (size_t i = 0; i < size; i++)
-		terminal_putchar(data[i]);
-}
- 
-void terminal_writestring(const char* data) {
-	terminal_write(data);
-}
 
 // Initialisation routine - zeroes all the interrupt service routines,
 // initialises the GDT and IDT.
@@ -143,7 +55,7 @@ void init_descriptor_tables()
 
 static void init_gdt()
 {
-   gdt_ptr.limit = (sizeof(gdt_entry_t) * 5) - 1;
+   gdt_ptr.limit = (sizeof(gdt_entry_t) * 5);// - 1;
    gdt_ptr.base  = (uint32_t)&gdt_entries;
 
    gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
@@ -181,23 +93,12 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
    idt_entries[num].flags   = flags /* | 0x60 */;
 }
 
-void *memset(void *dst, int c, size_t n){
-	if (n) {
-    	char *d = dst;
-
-	    do {
-	    	*d++ = c;
-	    } while (--n);
- 	}
- 	return dst;
- }
-
 static void init_idt()
 {
-   idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
-   idt_ptr.base  = (uint32_t)&idt_entries;
+	idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
+	idt_ptr.base  = (uint32_t)&idt_entries;
 
-   memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
+	memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
 
 	idt_set_gate(0, (uint32_t)isr0 , 0x08, 0x8E);
 	idt_set_gate(1, (uint32_t)isr1 , 0x08, 0x8E);
@@ -231,17 +132,169 @@ static void init_idt()
 	idt_set_gate(29, (uint32_t)isr29 , 0x08, 0x8E);
 	idt_set_gate(30, (uint32_t)isr30 , 0x08, 0x8E);
 	idt_set_gate(31, (uint32_t)isr31 , 0x08, 0x8E);
-	idt_set_gate(32, (uint32_t)isr32 , 0x08, 0x8E);
+	idt_flush((uint32_t)&idt_ptr);
 
-   idt_flush((uint32_t)&idt_ptr);
+	// Remap the irq table.
+	outb(0x20, 0x11);
+	outb(0xA0, 0x11);
+	outb(0x21, 0x20);
+	outb(0xA1, 0x28);
+	outb(0x21, 0x04);
+	outb(0xA1, 0x02);
+	outb(0x21, 0x01);
+	outb(0xA1, 0x01);
+	outb(0x21, 0x0);
+	outb(0xA1, 0x0);
+	idt_set_gate(32, (uint32_t)irq0, 0x08, 0x8E);
+	idt_set_gate(33, (uint32_t)irq1, 0x08, 0x8E);
+	idt_set_gate(34, (uint32_t)irq2, 0x08, 0x8E);
+	idt_set_gate(35, (uint32_t)irq3, 0x08, 0x8E);
+	idt_set_gate(36, (uint32_t)irq4, 0x08, 0x8E);
+	idt_set_gate(37, (uint32_t)irq5, 0x08, 0x8E);
+	idt_set_gate(38, (uint32_t)irq6, 0x08, 0x8E);
+	idt_set_gate(39, (uint32_t)irq7, 0x08, 0x8E);
+	idt_set_gate(40, (uint32_t)irq8, 0x08, 0x8E);
+	idt_set_gate(41, (uint32_t)irq9, 0x08, 0x8E);
+	idt_set_gate(42, (uint32_t)irq10, 0x08, 0x8E);
+	idt_set_gate(43, (uint32_t)irq11, 0x08, 0x8E);
+	idt_set_gate(44, (uint32_t)irq12, 0x08, 0x8E);
+	idt_set_gate(45, (uint32_t)irq13, 0x08, 0x8E);
+	idt_set_gate(46, (uint32_t)irq14, 0x08, 0x8E);
+	idt_set_gate(47, (uint32_t)irq15, 0x08, 0x8E);
 }
 
 void isr_handler(registers_t regs)
 {
-   terminal_writestring("recieved interrupt: ");
+   terminal_writestring("received interrupt: ");
    //monitor_write_dec(regs.int_no);
    //monitor_put('\n');
 }
+
+isr_t interrupt_handlers[256];
+
+// This gets called from our ASM interrupt handler stub.
+void irq_handler(registers_t regs)
+{
+   // Send an EOI (end of interrupt) signal to the PICs.
+   // If this interrupt involved the slave.
+   if (regs.int_no >= 40)
+   {
+       // Send reset signal to slave.
+       outb(0xA0, 0x20);
+   }
+   // Send reset signal to master. (As well as slave, if necessary).
+   outb(0x20, 0x20);
+
+   if (interrupt_handlers[regs.int_no] != 0)
+   {
+       isr_t handler = interrupt_handlers[regs.int_no];
+       handler(regs);
+   }
+}
+
+
+
+void register_interrupt_handler(uint8_t n, isr_t handler)
+{
+  interrupt_handlers[n] = handler;
+}
+
+enum KYBRD_ENCODER_IO {
+	KYBRD_ENC_INPUT_BUF	=	0x60,
+	KYBRD_ENC_CMD_REG	=	0x60
+};
+ 
+enum KYBRD_CTRL_IO {
+	KYBRD_CTRL_STATS_REG	=	0x64,
+	KYBRD_CTRL_CMD_REG	=	0x64
+};
+
+enum KYBRD_CTRL_STATS_MASK {
+ 
+	KYBRD_CTRL_STATS_MASK_OUT_BUF	=	1,		//00000001
+	KYBRD_CTRL_STATS_MASK_IN_BUF	=	2,		//00000010
+	KYBRD_CTRL_STATS_MASK_SYSTEM	=	4,		//00000100
+	KYBRD_CTRL_STATS_MASK_CMD_DATA	=	8,		//00001000
+	KYBRD_CTRL_STATS_MASK_LOCKED	=	0x10,		//00010000
+	KYBRD_CTRL_STATS_MASK_AUX_BUF	=	0x20,		//00100000
+	KYBRD_CTRL_STATS_MASK_TIMEOUT	=	0x40,		//01000000
+	KYBRD_CTRL_STATS_MASK_PARITY	=	0x80		//10000000
+};
+
+enum KYBRD_CTRL_CMDS {
+
+	KYBRD_CTRL_CMD_READ				=	0x20,
+	KYBRD_CTRL_CMD_WRITE			=	0x60,
+	KYBRD_CTRL_CMD_SELF_TEST		=	0xAA,
+	KYBRD_CTRL_CMD_INTERFACE_TEST	=	0xAB,
+	KYBRD_CTRL_CMD_DISABLE			=	0xAD,
+	KYBRD_CTRL_CMD_ENABLE			=	0xAE,
+	KYBRD_CTRL_CMD_READ_IN_PORT		=	0xC0,
+	KYBRD_CTRL_CMD_READ_OUT_PORT	=	0xD0,
+	KYBRD_CTRL_CMD_WRITE_OUT_PORT	=	0xD1,
+	KYBRD_CTRL_CMD_READ_TEST_INPUTS	=	0xE0,
+	KYBRD_CTRL_CMD_SYSTEM_RESET		=	0xFE,
+	KYBRD_CTRL_CMD_MOUSE_DISABLE	=	0xA7,
+	KYBRD_CTRL_CMD_MOUSE_ENABLE		=	0xA8,
+	KYBRD_CTRL_CMD_MOUSE_PORT_TEST	=	0xA9,
+	KYBRD_CTRL_CMD_MOUSE_WRITE		=	0xD4
+};
+
+//! read status from keyboard controller
+uint8_t kybrd_ctrl_read_status () {
+	return inb (KYBRD_CTRL_STATS_REG);
+}
+
+
+//! send command byte to keyboard controller
+void kybrd_ctrl_send_cmd (uint8_t cmd) {
+ 
+	//! wait for kkybrd controller input buffer to be clear
+	while (1)
+		if ( (kybrd_ctrl_read_status () & KYBRD_CTRL_STATS_MASK_IN_BUF) == 0)
+			break;
+ 
+	outb (KYBRD_CTRL_CMD_REG, cmd);
+}
+
+//! read keyboard encoder buffer
+uint8_t kybrd_enc_read_buf () {
+ 
+	return inb (KYBRD_ENC_INPUT_BUF);
+}
+ 
+//! send command byte to keyboard encoder
+void kybrd_enc_send_cmd (uint8_t cmd) {
+ 
+	//! wait for kkybrd controller input buffer to be clear
+	while (1)
+		if ( (kybrd_ctrl_read_status () & KYBRD_CTRL_STATS_MASK_IN_BUF) == 0)
+			break;
+ 
+	//! send command byte to kybrd encoder
+	outb (KYBRD_ENC_CMD_REG, cmd);
+}
+
+
+//! run self test
+bool kkybrd_self_test () {
+	//! send command
+	kybrd_ctrl_send_cmd (KYBRD_CTRL_CMD_SELF_TEST);
+ 
+	//! wait for output buffer to be full
+	while (1)
+		if (kybrd_ctrl_read_status () & KYBRD_CTRL_STATS_MASK_OUT_BUF)
+			break;
+ 
+	//! if output buffer == 0x55, test passed
+
+	uint8_t read_buf = kybrd_enc_read_buf ();
+
+	descriptor_writestring(read_buf);
+
+	return read_buf == 0x55;
+}
+
  
 #if defined(__cplusplus)
 extern "C" /* Use C linkage for kernel_main. */
@@ -258,4 +311,15 @@ void kernel_main(void) {
 
 	//asm volatile ("int $0x3");
 	//asm volatile ("int $0x4");
+
+	if(kkybrd_self_test()){
+		terminal_writestring("self test yes");
+	}
+	else{
+		terminal_writestring("self test no");
+	}
 }
+
+
+
+
