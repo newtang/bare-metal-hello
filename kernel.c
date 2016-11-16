@@ -175,6 +175,9 @@ isr_t interrupt_handlers[256];
 // This gets called from our ASM interrupt handler stub.
 void irq_handler(registers_t regs)
 {
+
+	terminal_writestring("123");
+
    // Send an EOI (end of interrupt) signal to the PICs.
    // If this interrupt involved the slave.
    if (regs.int_no >= 40)
@@ -199,101 +202,11 @@ void register_interrupt_handler(uint8_t n, isr_t handler)
   interrupt_handlers[n] = handler;
 }
 
-enum KYBRD_ENCODER_IO {
-	KYBRD_ENC_INPUT_BUF	=	0x60,
-	KYBRD_ENC_CMD_REG	=	0x60
-};
- 
-enum KYBRD_CTRL_IO {
-	KYBRD_CTRL_STATS_REG	=	0x64,
-	KYBRD_CTRL_CMD_REG	=	0x64
-};
-
-enum KYBRD_CTRL_STATS_MASK {
- 
-	KYBRD_CTRL_STATS_MASK_OUT_BUF	=	1,		//00000001
-	KYBRD_CTRL_STATS_MASK_IN_BUF	=	2,		//00000010
-	KYBRD_CTRL_STATS_MASK_SYSTEM	=	4,		//00000100
-	KYBRD_CTRL_STATS_MASK_CMD_DATA	=	8,		//00001000
-	KYBRD_CTRL_STATS_MASK_LOCKED	=	0x10,		//00010000
-	KYBRD_CTRL_STATS_MASK_AUX_BUF	=	0x20,		//00100000
-	KYBRD_CTRL_STATS_MASK_TIMEOUT	=	0x40,		//01000000
-	KYBRD_CTRL_STATS_MASK_PARITY	=	0x80		//10000000
-};
-
-enum KYBRD_CTRL_CMDS {
-
-	KYBRD_CTRL_CMD_READ				=	0x20,
-	KYBRD_CTRL_CMD_WRITE			=	0x60,
-	KYBRD_CTRL_CMD_SELF_TEST		=	0xAA,
-	KYBRD_CTRL_CMD_INTERFACE_TEST	=	0xAB,
-	KYBRD_CTRL_CMD_DISABLE			=	0xAD,
-	KYBRD_CTRL_CMD_ENABLE			=	0xAE,
-	KYBRD_CTRL_CMD_READ_IN_PORT		=	0xC0,
-	KYBRD_CTRL_CMD_READ_OUT_PORT	=	0xD0,
-	KYBRD_CTRL_CMD_WRITE_OUT_PORT	=	0xD1,
-	KYBRD_CTRL_CMD_READ_TEST_INPUTS	=	0xE0,
-	KYBRD_CTRL_CMD_SYSTEM_RESET		=	0xFE,
-	KYBRD_CTRL_CMD_MOUSE_DISABLE	=	0xA7,
-	KYBRD_CTRL_CMD_MOUSE_ENABLE		=	0xA8,
-	KYBRD_CTRL_CMD_MOUSE_PORT_TEST	=	0xA9,
-	KYBRD_CTRL_CMD_MOUSE_WRITE		=	0xD4
-};
-
-//! read status from keyboard controller
-uint8_t kybrd_ctrl_read_status () {
-	return inb (KYBRD_CTRL_STATS_REG);
+static void key_callback(registers_t regs)
+{
+   terminal_writestring("keypress");
 }
 
-
-//! send command byte to keyboard controller
-void kybrd_ctrl_send_cmd (uint8_t cmd) {
- 
-	//! wait for kkybrd controller input buffer to be clear
-	while (1)
-		if ( (kybrd_ctrl_read_status () & KYBRD_CTRL_STATS_MASK_IN_BUF) == 0)
-			break;
- 
-	outb (KYBRD_CTRL_CMD_REG, cmd);
-}
-
-//! read keyboard encoder buffer
-uint8_t kybrd_enc_read_buf () {
- 
-	return inb (KYBRD_ENC_INPUT_BUF);
-}
- 
-//! send command byte to keyboard encoder
-void kybrd_enc_send_cmd (uint8_t cmd) {
- 
-	//! wait for kkybrd controller input buffer to be clear
-	while (1)
-		if ( (kybrd_ctrl_read_status () & KYBRD_CTRL_STATS_MASK_IN_BUF) == 0)
-			break;
- 
-	//! send command byte to kybrd encoder
-	outb (KYBRD_ENC_CMD_REG, cmd);
-}
-
-
-//! run self test
-bool kkybrd_self_test () {
-	//! send command
-	kybrd_ctrl_send_cmd (KYBRD_CTRL_CMD_SELF_TEST);
- 
-	//! wait for output buffer to be full
-	while (1)
-		if (kybrd_ctrl_read_status () & KYBRD_CTRL_STATS_MASK_OUT_BUF)
-			break;
- 
-	//! if output buffer == 0x55, test passed
-
-	uint8_t read_buf = kybrd_enc_read_buf ();
-
-	descriptor_writestring(read_buf);
-
-	return read_buf == 0x55;
-}
 
  
 #if defined(__cplusplus)
@@ -309,15 +222,10 @@ void kernel_main(void) {
 	/* Newline support is left as an exercise. */
 	terminal_writestring("Hello, kernel World!\n\ntest");
 
+	register_interrupt_handler(IRQ1, &key_callback);
+
 	//asm volatile ("int $0x3");
 	//asm volatile ("int $0x4");
-
-	if(kkybrd_self_test()){
-		terminal_writestring("self test yes");
-	}
-	else{
-		terminal_writestring("self test no");
-	}
 }
 
 
