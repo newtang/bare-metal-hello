@@ -11,14 +11,15 @@ void *memset(void *dst, int c, size_t n){
  	return dst;
  }
 
-void outb(unsigned char value, unsigned short int port)
+void outb(uint16_t port, uint8_t val)
 {
-  asm volatile ("outb %b0,%w1": :"a" (value), "Nd" (port));
+    asm volatile ("outb %0, %1" : : "a" (val), "Nd" (port));
 }
 
-unsigned char inb (unsigned short int port)
+
+uint8_t inb(uint16_t port)
 {
-  unsigned char _v;
-  asm volatile ("inb %w1,%0":"=a" (_v):"Nd" (port));
-  return _v;
+    uint8_t ret;
+    asm volatile ("inb %1, %0" : "=a" (ret) : "Nd" (port) );
+    return ret;
 }

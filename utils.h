@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 void *memset(void *, int, size_t);
-void outb(unsigned char value, unsigned short int);
-unsigned char inb (unsigned short int);
+void outb(uint16_t, uint8_t);
+uint8_t inb(uint16_t);
 
 #endif

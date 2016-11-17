@@ -47,6 +47,29 @@ isr_common_stub:
    iret           #pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 
+#In isr.c
+#[EXTERN irq_handler]
+
+#This is our common IRQ stub. It saves the processor state, sets
+#up for kernel mode segments, calls the C-level fault handler,
+#and finally restores the stack frame. 
+irq_common_stub:
+   pusha                   #Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+
+   mov $0x10, %ax          #load the kernel data segment descriptor
+   mov %ax, %ds
+   mov %ax, %es
+   mov %ax, %fs
+   mov %ax, %gs
+
+   call irq_handler
+
+   popa                    #Pops edi,esi,ebp...
+   add $8, %esp             #Cleans up the pushed error code and pushed ISR number
+   sti
+   iret                    #pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+
+
 #.global isr0
 #isr0:
 #  cli            # Disable interrupts
@@ -105,36 +128,7 @@ ISR_NOERRCODE 32
     jmp isr_common_stub
 .endm
 
-#In isr.c
-#[EXTERN irq_handler]
 
-#This is our common IRQ stub. It saves the processor state, sets
-#up for kernel mode segments, calls the C-level fault handler,
-#and finally restores the stack frame. 
-irq_common_stub:
-   pusha                   #Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-
-   mov %ds, %ax            #Lower 16-bits of eax = ds.
-   push %eax               #save the data segment descriptor
-
-   mov $0x10, %ax          #load the kernel data segment descriptor
-   mov %ax, %ds
-   mov %ax, %es
-   mov %ax, %fs
-   mov %ax, %gs
-
-   call irq_handler
-
-   pop %ebx                #reload the original data segment descriptor
-   mov %bx, %ds
-   mov %bx, %es 
-   mov %bx, %fs
-   mov %bx, %gs
-
-   popa                    #Pops edi,esi,ebp...
-   add $8, %esp             #Cleans up the pushed error code and pushed ISR number
-   sti
-   iret                    #pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 
 
@@ -144,8 +138,8 @@ irq_common_stub:
   .global irq\num
   irq\num:
     cli
-    push 0
-    push \remap
+    push $0
+    push $\remap
     jmp irq_common_stub
 .endm
 

@@ -14,6 +14,60 @@
 #include "isr.h"
 
 
+size_t debug_strlen(const char* str) {
+	size_t len = 0;
+	while (str[len])
+		len++;
+	return len;
+}
+
+void debug_char(char c){
+	outb(0x3f8, c);
+}
+
+void debug_string(const char* data) {
+	size_t size = debug_strlen(data);
+	for (size_t i = 0; i < size; i++)
+		debug_char(data[i]);
+}
+ 
+void debug(const char* data) {
+	debug_string(data);
+	debug_char('\n');
+}
+
+
+void debug_int (uint8_t num){
+	int maxPos = 99;
+	int lastPos = maxPos;
+	char chars[maxPos+1];
+	for(int i=1; i<=maxPos; ++i){
+		char c = ((num % 10) + '0');
+		chars[lastPos] = c;
+		num /= 10;
+		lastPos--;
+	}
+
+	lastPos++;
+
+	//skipping starting zeros
+	while(chars[lastPos] == '0'){
+		lastPos++;
+	}
+
+	if(lastPos >= maxPos){
+		debug_char('0');	
+	}
+
+	while (lastPos <= maxPos){
+		debug_char(chars[lastPos]);
+		lastPos++;
+	}
+	debug_char('\n');
+
+}
+
+
 // Lets us access our ASM functions from our C code.
 extern void gdt_flush(uint32_t);
 extern void idt_flush(uint32_t);
@@ -41,8 +95,6 @@ idt_ptr_t   idt_ptr;
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
  
-
-
 
 // Initialisation routine - zeroes all the interrupt service routines,
 // initialises the GDT and IDT.
@@ -132,7 +184,7 @@ static void init_idt()
 	idt_set_gate(29, (uint32_t)isr29 , 0x08, 0x8E);
 	idt_set_gate(30, (uint32_t)isr30 , 0x08, 0x8E);
 	idt_set_gate(31, (uint32_t)isr31 , 0x08, 0x8E);
-	idt_flush((uint32_t)&idt_ptr);
+
 
 	// Remap the irq table.
 	outb(0x20, 0x11);
@@ -143,8 +195,8 @@ static void init_idt()
 	outb(0xA1, 0x02);
 	outb(0x21, 0x01);
 	outb(0xA1, 0x01);
-	outb(0x21, 0x0);
-	outb(0xA1, 0x0);
+	outb(0x21, 0xFF);
+	outb(0xA1, 0xFF);
 	idt_set_gate(32, (uint32_t)irq0, 0x08, 0x8E);
 	idt_set_gate(33, (uint32_t)irq1, 0x08, 0x8E);
 	idt_set_gate(34, (uint32_t)irq2, 0x08, 0x8E);
@@ -161,11 +213,12 @@ static void init_idt()
 	idt_set_gate(45, (uint32_t)irq13, 0x08, 0x8E);
 	idt_set_gate(46, (uint32_t)irq14, 0x08, 0x8E);
 	idt_set_gate(47, (uint32_t)irq15, 0x08, 0x8E);
+	idt_flush((uint32_t)&idt_ptr);
 }
 
 void isr_handler(registers_t regs)
 {
-   terminal_writestring("received interrupt: ");
+   //terminal_writestring("received interrupt: ");
    //monitor_write_dec(regs.int_no);
    //monitor_put('\n');
 }
@@ -176,36 +229,71 @@ isr_t interrupt_handlers[256];
 void irq_handler(registers_t regs)
 {
 
+	debug("interrupt #:");
+	debug_int(regs.int_no);
+
+
 	terminal_writestring("123");
 
    // Send an EOI (end of interrupt) signal to the PICs.
    // If this interrupt involved the slave.
+   // Send reset signal to master. (As well as slave, if necessary).
+   outb(0x20, 0x20);
    if (regs.int_no >= 40)
    {
        // Send reset signal to slave.
        outb(0xA0, 0x20);
    }
-   // Send reset signal to master. (As well as slave, if necessary).
-   outb(0x20, 0x20);
 
    if (interrupt_handlers[regs.int_no] != 0)
    {
        isr_t handler = interrupt_handlers[regs.int_no];
        handler(regs);
    }
+
+   terminal_writestring("456");
 }
 
+#define PIC1_DATA  0x21
+#define PIC2_DATA  0xA1
 
 
-void register_interrupt_handler(uint8_t n, isr_t handler)
-{
+void register_interrupt_handler(uint8_t n, isr_t handler){
   interrupt_handlers[n] = handler;
 }
+
+void irq_unmask(uint8_t irq)
+{
+
+  descriptor_writestring(irq);
+  debug("irq a:");
+  debug_int(irq);
+
+
+  irq -= 32;
+  uint16_t port = (irq < 8) ? PIC1_DATA : PIC2_DATA;
+  debug("irq b:");
+  debug_int(irq);
+ 
+  debug("port: " );
+  debug_int(port);
+
+
+
+  outb(port, inb(port) & ~(1 << irq % 8));
+
+}
+
 
 static void key_callback(registers_t regs)
 {
    terminal_writestring("keypress");
 }
+
+
+ 
+
+
 
 
  
@@ -222,7 +310,18 @@ void kernel_main(void) {
 	/* Newline support is left as an exercise. */
 	terminal_writestring("Hello, kernel World!\n\ntest");
 
+
 	register_interrupt_handler(IRQ1, &key_callback);
+	irq_unmask(IRQ1);
+
+
+	asm volatile ("sti");
+
+	for(;;){
+		//debug("a");
+		asm volatile ("hlt");
+	}
+
 
 	//asm volatile ("int $0x3");
 	//asm volatile ("int $0x4");
