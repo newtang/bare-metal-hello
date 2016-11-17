@@ -225,15 +225,26 @@ void isr_handler(registers_t regs)
 
 isr_t interrupt_handlers[256];
 
+//! read status from keyboard controller
+uint8_t keyboard_read_status(){
+	return inb(0x64);
+}
+
+//! read keyboard encoder buffer
+uint8_t kybrd_enc_read_buf () {
+	return inb (0x60);
+}
+
+
 // This gets called from our ASM interrupt handler stub.
 void irq_handler(registers_t regs)
 {
 
-	debug("interrupt #:");
-	debug_int(regs.int_no);
+	uint8_t status  = keyboard_read_status();
 
+	//if you don't read from the buffer you won't get any more interrupts!
+	uint8_t code = kybrd_enc_read_buf ();
 
-	terminal_writestring("123");
 
    // Send an EOI (end of interrupt) signal to the PICs.
    // If this interrupt involved the slave.
@@ -250,8 +261,6 @@ void irq_handler(registers_t regs)
        isr_t handler = interrupt_handlers[regs.int_no];
        handler(regs);
    }
-
-   terminal_writestring("456");
 }
 
 #define PIC1_DATA  0x21
@@ -291,12 +300,6 @@ static void key_callback(registers_t regs)
 }
 
 
- 
-
-
-
-
- 
 #if defined(__cplusplus)
 extern "C" /* Use C linkage for kernel_main. */
 #endif
@@ -318,13 +321,8 @@ void kernel_main(void) {
 	asm volatile ("sti");
 
 	for(;;){
-		//debug("a");
 		asm volatile ("hlt");
 	}
-
-
-	//asm volatile ("int $0x3");
-	//asm volatile ("int $0x4");
 }
 
 
