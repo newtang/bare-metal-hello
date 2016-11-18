@@ -7,4 +7,4 @@ i686-elf-gcc -c debug.c  -o output/debug.o -std=gnu99 -ffreestanding -O2 -Wall -
 i686-elf-gcc -c utils.c  -o output/utils.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra;
 i686-elf-gcc -c terminal.c  -o output/terminal.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra;
 i686-elf-gcc -T linker.ld -o output/myos.bin -ffreestanding -O2 -nostdlib output/io.o output/debug.o output/terminal.o output/utils.o output/boot.o output/gdt.o output/kernel.o -lgcc;
-qemu-system-i386  -kernel output/myos.bin; #-serial file:serial.log
+qemu-system-i386 -serial file:serial.log  -kernel output/myos.bin; #-serial file:serial.log

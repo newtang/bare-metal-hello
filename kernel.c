@@ -29,9 +29,7 @@ static void gdt_set_gate(int32_t,uint32_t,uint32_t,uint8_t,uint8_t);
 gdt_entry_t gdt_entries[5];
 gdt_ptr_t   gdt_ptr;
 idt_entry_t idt_entries[256];
-idt_ptr_t   idt_ptr;
-
-
+idt_ptr_t   idt_ptr;	
  
 /* Check if the compiler thinks we are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -173,25 +171,285 @@ void isr_handler(registers_t regs)
 
 isr_t interrupt_handlers[256];
 
-//! read status from keyboard controller
-uint8_t keyboard_read_status(){
-	return inb(0x64);
-}
+enum KEYBOARD_ENCODER_IO {
+	INPUT_ENCODE_BUF	=	0x60,
+	KYBRD_ENC_CMD_REG	=	0x60
+};
+
+enum KEYCODE {
+
+// Alphanumeric keys ////////////////
+
+	KEY_SPACE             = ' ',
+	KEY_0                 = '0',
+	KEY_1                 = '1',
+	KEY_2                 = '2',
+	KEY_3                 = '3',
+	KEY_4                 = '4',
+	KEY_5                 = '5',
+	KEY_6                 = '6',
+	KEY_7                 = '7',
+	KEY_8                 = '8',
+	KEY_9                 = '9',
+
+	KEY_A                 = 'a',
+	KEY_B                 = 'b',
+	KEY_C                 = 'c',
+	KEY_D                 = 'd',
+	KEY_E                 = 'e',
+	KEY_F                 = 'f',
+	KEY_G                 = 'g',
+	KEY_H                 = 'h',
+	KEY_I                 = 'i',
+	KEY_J                 = 'j',
+	KEY_K                 = 'k',
+	KEY_L                 = 'l',
+	KEY_M                 = 'm',
+	KEY_N                 = 'n',
+	KEY_O                 = 'o',
+	KEY_P                 = 'p',
+	KEY_Q                 = 'q',
+	KEY_R                 = 'r',
+	KEY_S                 = 's',
+	KEY_T                 = 't',
+	KEY_U                 = 'u',
+	KEY_V                 = 'v',
+	KEY_W                 = 'w',
+	KEY_X                 = 'x',
+	KEY_Y                 = 'y',
+	KEY_Z                 = 'z',
+
+	KEY_RETURN            = '\r',
+	KEY_ESCAPE            = 0x1001,
+	KEY_BACKSPACE         = '\b',
+
+// Arrow keys ////////////////////////
+
+	KEY_UP                = 0x1100,
+	KEY_DOWN              = 0x1101,
+	KEY_LEFT              = 0x1102,
+	KEY_RIGHT             = 0x1103,
+
+// Function keys /////////////////////
+
+	KEY_F1                = 0x1201,
+	KEY_F2                = 0x1202,
+	KEY_F3                = 0x1203,
+	KEY_F4                = 0x1204,
+	KEY_F5                = 0x1205,
+	KEY_F6                = 0x1206,
+	KEY_F7                = 0x1207,
+	KEY_F8                = 0x1208,
+	KEY_F9                = 0x1209,
+	KEY_F10               = 0x120a,
+	KEY_F11               = 0x120b,
+	KEY_F12               = 0x120b,
+	KEY_F13               = 0x120c,
+	KEY_F14               = 0x120d,
+	KEY_F15               = 0x120e,
+
+	KEY_DOT               = '.',
+	KEY_COMMA             = ',',
+	KEY_COLON             = ':',
+	KEY_SEMICOLON         = ';',
+	KEY_SLASH             = '/',
+	KEY_BACKSLASH         = '\\',
+	KEY_PLUS              = '+',
+	KEY_MINUS             = '-',
+	KEY_ASTERISK          = '*',
+	KEY_EXCLAMATION       = '!',
+	KEY_QUESTION          = '?',
+	KEY_QUOTEDOUBLE       = '\"',
+	KEY_QUOTE             = '\'',
+	KEY_EQUAL             = '=',
+	KEY_HASH              = '#',
+	KEY_PERCENT           = '%',
+	KEY_AMPERSAND         = '&',
+	KEY_UNDERSCORE        = '_',
+	KEY_LEFTPARENTHESIS   = '(',
+	KEY_RIGHTPARENTHESIS  = ')',
+	KEY_LEFTBRACKET       = '[',
+	KEY_RIGHTBRACKET      = ']',
+	KEY_LEFTCURL          = '{',
+	KEY_RIGHTCURL         = '}',
+	KEY_DOLLAR            = '$',
+	KEY_LESS              = '<',
+	KEY_GREATER           = '>',
+	KEY_BAR               = '|',
+	KEY_GRAVE             = '`',
+	KEY_TILDE             = '~',
+	KEY_AT                = '@',
+	KEY_CARRET            = '^',
+
+// Numeric keypad //////////////////////
+
+	KEY_KP_0              = '0',
+	KEY_KP_1              = '1',
+	KEY_KP_2              = '2',
+	KEY_KP_3              = '3',
+	KEY_KP_4              = '4',
+	KEY_KP_5              = '5',
+	KEY_KP_6              = '6',
+	KEY_KP_7              = '7',
+	KEY_KP_8              = '8',
+	KEY_KP_9              = '9',
+	KEY_KP_PLUS           = '+',
+	KEY_KP_MINUS          = '-',
+	KEY_KP_DECIMAL        = '.',
+	KEY_KP_DIVIDE         = '/',
+	KEY_KP_ASTERISK       = '*',
+	KEY_KP_NUMLOCK        = 0x300f,
+	KEY_KP_ENTER          = 0x3010,
+
+	KEY_TAB               = 0x4000,
+	KEY_CAPSLOCK          = 0x4001,
+
+// Modify keys ////////////////////////////
+
+	KEY_LSHIFT            = 0x4002,
+	KEY_LCTRL             = 0x4003,
+	KEY_LALT              = 0x4004,
+	KEY_LWIN              = 0x4005,
+	KEY_RSHIFT            = 0x4006,
+	KEY_RCTRL             = 0x4007,
+	KEY_RALT              = 0x4008,
+	KEY_RWIN              = 0x4009,
+
+	KEY_INSERT            = 0x400a,
+	KEY_DELETE            = 0x400b,
+	KEY_HOME              = 0x400c,
+	KEY_END               = 0x400d,
+	KEY_PAGEUP            = 0x400e,
+	KEY_PAGEDOWN          = 0x400f,
+	KEY_SCROLLLOCK        = 0x4010,
+	KEY_PAUSE             = 0x4011,
+
+	KEY_UNKNOWN,
+	KEY_NUMKEYCODES
+};
+//! original xt scan code set. Array index==make code
+//! change what keys the scan code corrospond to if your scan code set is different
+static uint32_t _kkybrd_scancode_std [] = {
+	//! key			scancode
+	KEY_UNKNOWN,	//0
+	KEY_ESCAPE,		//1
+	KEY_1,			//2
+	KEY_2,			//3
+	KEY_3,			//4
+	KEY_4,			//5
+	KEY_5,			//6
+	KEY_6,			//7
+	KEY_7,			//8
+	KEY_8,			//9
+	KEY_9,			//0xa
+	KEY_0,			//0xb
+	KEY_MINUS,		//0xc
+	KEY_EQUAL,		//0xd
+	KEY_BACKSPACE,	//0xe
+	KEY_TAB,		//0xf
+	KEY_Q,			//0x10
+	KEY_W,			//0x11
+	KEY_E,			//0x12
+	KEY_R,			//0x13
+	KEY_T,			//0x14
+	KEY_Y,			//0x15
+	KEY_U,			//0x16
+	KEY_I,			//0x17
+	KEY_O,			//0x18
+	KEY_P,			//0x19
+	KEY_LEFTBRACKET,//0x1a
+	KEY_RIGHTBRACKET,//0x1b
+	KEY_RETURN,		//0x1c
+	KEY_LCTRL,		//0x1d
+	KEY_A,			//0x1e
+	KEY_S,			//0x1f
+	KEY_D,			//0x20
+	KEY_F,			//0x21
+	KEY_G,			//0x22
+	KEY_H,			//0x23
+	KEY_J,			//0x24
+	KEY_K,			//0x25
+	KEY_L,			//0x26
+	KEY_SEMICOLON,	//0x27
+	KEY_QUOTE,		//0x28
+	KEY_GRAVE,		//0x29
+	KEY_LSHIFT,		//0x2a
+	KEY_BACKSLASH,	//0x2b
+	KEY_Z,			//0x2c
+	KEY_X,			//0x2d
+	KEY_C,			//0x2e
+	KEY_V,			//0x2f
+	KEY_B,			//0x30
+	KEY_N,			//0x31
+	KEY_M,			//0x32
+	KEY_COMMA,		//0x33
+	KEY_DOT,		//0x34
+	KEY_SLASH,		//0x35
+	KEY_RSHIFT,		//0x36
+	KEY_KP_ASTERISK,//0x37
+	KEY_RALT,		//0x38
+	KEY_SPACE,		//0x39
+	KEY_CAPSLOCK,	//0x3a
+	KEY_F1,			//0x3b
+	KEY_F2,			//0x3c
+	KEY_F3,			//0x3d
+	KEY_F4,			//0x3e
+	KEY_F5,			//0x3f
+	KEY_F6,			//0x40
+	KEY_F7,			//0x41
+	KEY_F8,			//0x42
+	KEY_F9,			//0x43
+	KEY_F10,		//0x44
+	KEY_KP_NUMLOCK,	//0x45
+	KEY_SCROLLLOCK,	//0x46
+	KEY_HOME,		//0x47
+	KEY_KP_8,		//0x48	//keypad up arrow
+	KEY_PAGEUP,		//0x49
+	KEY_KP_2,		//0x50	//keypad down arrow
+	KEY_KP_3,		//0x51	//keypad page down
+	KEY_KP_0,		//0x52	//keypad insert key
+	KEY_KP_DECIMAL,	//0x53	//keypad delete key
+	KEY_UNKNOWN,	//0x54
+	KEY_UNKNOWN,	//0x55
+	KEY_UNKNOWN,	//0x56
+	KEY_F11,		//0x57
+	KEY_F12			//0x58
+};
 
 //! read keyboard encoder buffer
-uint8_t kybrd_enc_read_buf () {
-	return inb (0x60);
+uint8_t keyboard_enc_read_buf () {
+	return inb (INPUT_ENCODE_BUF);
 }
 
+bool isShift(uint8_t code){
+	uint32_t key = _kkybrd_scancode_std [code];
+	return key ==  KEY_LSHIFT || key == KEY_RSHIFT;
+}
+
+//bool shiftIsPressed = false;
+uint8_t shiftIsPressed = 0;
+const uint8_t RIGHT_SHIFT_MASK = 1;
+const uint8_t LEFT_SHIFT_MASK = 2;
+
+
+bool shiftPressed(){
+	return shiftIsPressed > 0;
+}
+
+char to_upper(char ch1) {
+	if(ch1 >= 'a' && ch1 <= 'z'){
+		ch1 += 'A' - 'a';
+	}
+    return ch1;
+}
 
 // This gets called from our ASM interrupt handler stub.
 void irq_handler(registers_t regs)
 {
 
-	uint8_t status  = keyboard_read_status();
-
 	//if you don't read from the buffer you won't get any more interrupts!
-	uint8_t code = kybrd_enc_read_buf ();
+	uint8_t code = keyboard_enc_read_buf ();
+	//descriptor_writestring(code);
 
 
    // Send an EOI (end of interrupt) signal to the PICs.
@@ -204,11 +462,42 @@ void irq_handler(registers_t regs)
        outb(0xA0, 0x20);
    }
 
-   if (interrupt_handlers[regs.int_no] != 0)
-   {
-       isr_t handler = interrupt_handlers[regs.int_no];
-       handler(regs);
-   }
+   //! test if this is a break code (Original XT Scan Code Set specific)
+   //break code is when a key is released
+	if (code & 0x80) {	//test bit 7
+		code -= 0x80;
+		uint32_t key = _kkybrd_scancode_std [code];
+
+		switch(key){
+			case KEY_RSHIFT:
+				shiftIsPressed &=  (shiftIsPressed & ~RIGHT_SHIFT_MASK);
+				break;
+			case KEY_LSHIFT:
+				shiftIsPressed &=  (shiftIsPressed & ~LEFT_SHIFT_MASK);
+				break;
+		}
+	}
+	else {
+
+		uint32_t key = _kkybrd_scancode_std [code];
+		switch(key){
+			case KEY_RSHIFT:
+				shiftIsPressed |= RIGHT_SHIFT_MASK;
+				break;
+			case KEY_LSHIFT:
+				shiftIsPressed |= LEFT_SHIFT_MASK;
+				break;
+			default:
+				if(shiftPressed()){
+					key = to_upper(key);
+				}
+
+				terminal_putchar((char)key);
+				break;
+		}
+
+
+	}
 }
 
 #define PIC1_DATA  0x21
@@ -221,30 +510,21 @@ void register_interrupt_handler(uint8_t n, isr_t handler){
 
 void irq_unmask(uint8_t irq)
 {
-
-  descriptor_writestring(irq);
-  debug("irq a:");
-  debug_int(irq);
-
-
   irq -= 32;
   uint16_t port = (irq < 8) ? PIC1_DATA : PIC2_DATA;
-  debug("irq b:");
-  debug_int(irq);
- 
-  debug("port: " );
-  debug_int(port);
-
-
-
   outb(port, inb(port) & ~(1 << irq % 8));
-
 }
 
 
 static void key_callback(registers_t regs)
 {
-   terminal_writestring("keypress");
+   //terminal_writestring("keypress");
+}
+
+void init_keyboard(){
+	register_interrupt_handler(IRQ1, &key_callback);
+	irq_unmask(IRQ1);
+	asm volatile ("sti");
 }
 
 
@@ -258,15 +538,9 @@ void kernel_main(void) {
 	/* Initialize terminal interface */
 	terminal_initialize();
  
-	/* Newline support is left as an exercise. */
 	terminal_writestring("Hello, kernel World!\n\ntest");
 
-
-	register_interrupt_handler(IRQ1, &key_callback);
-	irq_unmask(IRQ1);
-
-
-	asm volatile ("sti");
+	init_keyboard();
 
 	for(;;){
 		asm volatile ("hlt");
