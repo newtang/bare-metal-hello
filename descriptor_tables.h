@@ -1,4 +1,8 @@
+#ifndef _DESCRIPTOR_TABLES_H_   /* Include guard */
+#define _DESCRIPTOR_TABLES_H_
+
 #include <stdint.h>
+
 // This structure contains the value of one GDT entry.
 // We use the attribute 'packed' to tell GCC not to change
 // any of the alignment in the structure.
@@ -118,3 +122,5 @@ extern void irq32 ();
 
 // Initialisation function is publicly accessible.
 void init_descriptor_tables();
+
+#endif
