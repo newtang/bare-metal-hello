@@ -8,12 +8,12 @@
 #endif
 #include <stddef.h>
 #include <stdint.h>
+#include "utils.h"
 #include "io.h"
 #include "debug.h"
+#include "interrupts.h"
 #include "descriptor_tables.h"
 #include "terminal.h"
-#include "utils.h"
-#include "isr.h"
  
 /* Check if the compiler thinks we are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -32,8 +32,6 @@ void isr_handler(registers_t regs)
    //monitor_write_dec(regs.int_no);
    //monitor_put('\n');
 }
-
-isr_t interrupt_handlers[256];
 
 enum KEYBOARD_ENCODER_IO {
 	INPUT_ENCODE_BUF	=	0x60,
@@ -307,28 +305,7 @@ char to_upper(char ch1) {
     return ch1;
 }
 
-// This gets called from our ASM interrupt handler stub.
-void irq_handler(registers_t regs)
-{
 
-	if (interrupt_handlers[regs.int_no] != 0){
-    	isr_t handler = interrupt_handlers[regs.int_no];
-    	handler(regs);
-	}
-}
-
-#define PIC1_DATA  0x21
-#define PIC2_DATA  0xA1
-
-void register_interrupt_handler(uint8_t n, isr_t handler){
-  interrupt_handlers[n] = handler;
-}
-
-void irq_unmask(uint8_t irq){
-  irq -= 32;
-  uint16_t port = (irq < 8) ? PIC1_DATA : PIC2_DATA;
-  outb(port, inb(port) & ~(1 << irq % 8));
-}
 
 
 static void key_callback(registers_t regs)
@@ -386,9 +363,9 @@ static void key_callback(registers_t regs)
 }
 
 void init_keyboard(){
-	register_interrupt_handler(IRQ1, &key_callback);
 	irq_unmask(IRQ1);
 	asm volatile ("sti");
+	register_interrupt_handler(IRQ1, &key_callback);
 }
 
 
