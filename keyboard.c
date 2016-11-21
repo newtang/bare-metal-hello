@@ -256,7 +256,7 @@ static void key_callback(registers_t regs)
 		}
 	}
 	else {
-
+		//a make code is sent when a key is pressed or held down
 		uint32_t key = _kkybrd_scancode_std [code];
 		callbacks[KEY_DOWN_EVENT]((char)key);
 		switch(key){
