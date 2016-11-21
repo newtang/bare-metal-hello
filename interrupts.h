@@ -11,7 +11,6 @@ typedef struct registers
 } __attribute__((packed)) registers_t;
 
 extern void irq_handler(registers_t regs);
-void irq_unmask(uint8_t irq);
 
 // Enables registration of callbacks for interrupts or IRQs.
 // For IRQs, to ease confusion, use the #defines above as the
