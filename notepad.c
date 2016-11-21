@@ -21,15 +21,15 @@ static void onKeyDown(char code){
 	if(!charsDown[(uint32_t) code]){
 		charsDown[(uint32_t) code] = true;
 		++totalDown;
-		debug("onKeyDown: ");
-		debug_int(totalDown);
+		//debug("onKeyDown: ");
+		//debug_int(totalDown);
 	}
 
 	if(totalDown >= MAX_KEYS_DOWN){
 		if(!relaxMsg){
 			terminal_writestring(" Relax. It's going to be ok. ");
-			debug("print relax: ");
-			debug_int(totalDown);
+			//debug("print relax: ");
+			//debug_int(totalDown);
 			relaxMsg = true;
 		}
 
@@ -47,8 +47,8 @@ static void onKeyDown(char code){
 static void onKeyUp(char code){
 	charsDown[(uint32_t) code] = false;
 	--totalDown;
-	debug("onKeyUp: ");
-	debug_int(totalDown);
+//	debug("onKeyUp: ");
+//	debug_int(totalDown);
 }
 
 
