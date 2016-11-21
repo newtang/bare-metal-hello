@@ -24,7 +24,6 @@ enum vga_color {
 void terminal_putchar(char);
 void terminal_initialize(enum vga_color fg, enum vga_color bg);
 void terminal_writestring(const char*);
-void descriptor_writestring (uint8_t);
-
+void terminal_newline();
 
 #endif
