@@ -1,7 +1,6 @@
 //from http://wiki.osdev.org/Bare_Bones
 //also from http://raw.knusbaum.com/jamesmolloy/tutorial_html/4.-The%20GDT%20and%20IDT.html
 
-
 /* Check if the compiler thinks we are targeting the wrong operating system. */
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -23,13 +22,6 @@
 #include "descriptor_tables.h"
 #include "keyboard.h"
 #include "notepad.h"
- 
-void isr_handler(registers_t regs)
-{
-   //terminalWriteString("received interrupt: ");
-   //monitor_write_dec(regs.int_no);
-   //monitor_put('\n');
-}
 
 #if defined(__cplusplus)
 extern "C" /* Use C linkage for kernel_main. */

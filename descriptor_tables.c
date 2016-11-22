@@ -11,11 +11,11 @@ static void gdt_set_gate(int32_t,uint32_t,uint32_t,uint8_t,uint8_t);
 static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags);
 static void init_idt();
 
-gdt_entry_t gdt_entries[5];
-gdt_ptr_t   gdt_ptr;
+static gdt_entry_t gdt_entries[5];
+static gdt_ptr_t   gdt_ptr;
 
-idt_entry_t idt_entries[256];
-idt_ptr_t   idt_ptr; 
+static idt_entry_t idt_entries[256];
+static idt_ptr_t   idt_ptr; 
 
 // Initialisation routine - zeroes all the interrupt service routines,
 // initialises the GDT and IDT.
@@ -26,7 +26,7 @@ void init_descriptor_tables()
    init_idt();
 }
 
-void init_gdt()
+static void init_gdt()
 {
    gdt_ptr.limit = (sizeof(gdt_entry_t) * 5);// - 1;
    gdt_ptr.base  = (uint32_t)&gdt_entries;
@@ -41,7 +41,7 @@ void init_gdt()
 }
 
 // Set the value of one GDT entry.
-void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
+static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
 {
    gdt_entries[num].base_low    = (base & 0xFFFF);
    gdt_entries[num].base_middle = (base >> 16) & 0xFF;
@@ -54,7 +54,7 @@ void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, ui
    gdt_entries[num].access      = access;
 }
 
-void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
+static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
 {
    idt_entries[num].base_lo = base & 0xFFFF;
    idt_entries[num].base_hi = (base >> 16) & 0xFFFF;
@@ -66,7 +66,7 @@ void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
    idt_entries[num].flags   = flags /* | 0x60 */;
 }
 
-void init_idt()
+static void init_idt()
 {
    idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
    idt_ptr.base  = (uint32_t)&idt_entries;

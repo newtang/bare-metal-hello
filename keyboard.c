@@ -13,7 +13,7 @@ enum KEYBOARD_ENCODER_IO {
 
 //! original xt scan code set. Array index==make code
 //! change what keys the scan code corrospond to if your scan code set is different
-uint32_t _kkybrd_scancode_std [] = {
+static uint32_t _kkybrd_scancode_std [] = {
 	//! key			scancode
 	KEY_UNKNOWN,	//0
 	KEY_ESCAPE,		//1

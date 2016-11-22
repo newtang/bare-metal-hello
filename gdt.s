@@ -39,9 +39,6 @@ isr_common_stub:
    mov %ax, %es
    mov %ax, %fs
    mov %ax, %gs
-
-   call isr_handler
-
    popa                     #Pops edi,esi,ebp...
    add $8, %esp     #Cleans up the pushed error code and pushed ISR number
    iret           #pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
