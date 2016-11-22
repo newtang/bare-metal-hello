@@ -23,11 +23,11 @@ static uint8_t terminalColor;
 static uint16_t* terminalBuffer;
 
 
-size_t getIndex(size_t x, size_t y){
+static size_t getIndex(size_t x, size_t y){
 	return y * VGA_WIDTH + x;
 }
 
-void updateCursor(){
+static void updateCursor(){
  	//the cursor logic inverts our notion of rows and columns
     unsigned short position = getIndex(terminalColumn, terminalRow);
 
@@ -52,7 +52,7 @@ void terminalInitialize(enum vga_color fg, enum vga_color bg) {
 	}
 }
   
-void terminalPutEntryAt(char c, uint8_t color, size_t x, size_t y) {
+static void terminalPutEntryAt(char c, uint8_t color, size_t x, size_t y) {
 	const size_t index = getIndex(x,y);
 	terminalBuffer[index] = vga_entry(c, color);
 }
