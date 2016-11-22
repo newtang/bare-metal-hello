@@ -2,6 +2,7 @@
 #include <stdbool.h> //built into the compiler /* C doesn't have booleans by default. *
 #include <stddef.h>
 #include <stdint.h>
+#include "io.h"
 #include "terminal.h"
 #include "utils.h"
 
@@ -25,6 +26,17 @@ static uint16_t* terminal_buffer;
 size_t getIndex(size_t x, size_t y){
 	return y * VGA_WIDTH + x;
 }
+
+ void updateCursor(){
+    unsigned short position = getIndex(terminal_column, terminal_row);
+
+    // cursor LOW port to vga INDEX register
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (unsigned char)(position&0xFF));
+    // cursor HIGH port to vga INDEX register
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (unsigned char )((position>>8)&0xFF));
+ }
 
 void terminal_initialize(enum vga_color fg, enum vga_color bg) {
 	terminal_row = 0;
@@ -51,6 +63,7 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
 void terminal_newline(){
 	++terminal_row;
 	terminal_column = 0;
+	updateCursor();
 }
 
 void terminal_putchar(char c) {
@@ -61,6 +74,8 @@ void terminal_putchar(char c) {
 		if (++terminal_row == VGA_HEIGHT)
 			terminal_row = 0;
 	}
+
+	updateCursor();
 }
  
 void terminal_write(const char* data) {
