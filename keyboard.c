@@ -13,7 +13,7 @@ enum KEYBOARD_ENCODER_IO {
 
 //! original xt scan code set. Array index==make code
 //! change what keys the scan code corrospond to if your scan code set is different
-static uint32_t _kkybrd_scancode_std [] = {
+static uint32_t keyboardScancodeStd [] = {
 	//! key			scancode
 	KEY_UNKNOWN,	//0
 	KEY_ESCAPE,		//1
@@ -192,11 +192,11 @@ static char convertWithShift(char ch1) {
     return ch1;
 }
 
-static uint32_t (*callbacks[4]) (char);
+static void (*callbacks[4]) (char);
 
 static bool isPrintable(uint8_t code){
 	
-	uint32_t key = _kkybrd_scancode_std [code];
+	uint32_t key = keyboardScancodeStd [code];
 	if(code >= 0x3a){
 		return false;
 	}
@@ -243,7 +243,7 @@ static void key_callback(registers_t regs)
    //break code is when a key is released
 	if (code & 0x80) {	//test bit 7
 		code -= 0x80;
-		uint32_t key = _kkybrd_scancode_std [code];
+		uint32_t key = keyboardScancodeStd [code];
 		callbacks[KEY_UP_EVENT]((char)key);
 
 		switch(key){
@@ -257,7 +257,7 @@ static void key_callback(registers_t regs)
 	}
 	else {
 		//a make code is sent when a key is pressed or held down
-		uint32_t key = _kkybrd_scancode_std [code];
+		uint32_t key = keyboardScancodeStd [code];
 		callbacks[KEY_DOWN_EVENT]((char)key);
 		switch(key){
 			case KEY_RSHIFT:
