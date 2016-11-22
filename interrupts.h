@@ -16,7 +16,7 @@ extern void irqHandler(registers_t regs);
 // For IRQs, to ease confusion, use the #defines above as the
 // first parameter.
 typedef void (*isr_t)(registers_t);
-void register_interrupt_handler(uint8_t n, isr_t handler);
+void registerInterruptHandler(uint8_t n, isr_t handler);
 
 //
 // Interface and structures for high level interrupt service routines.

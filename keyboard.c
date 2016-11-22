@@ -102,7 +102,7 @@ static uint32_t keyboardScancodeStd [] = {
 
 
 //! read keyboard encoder buffer
-static uint8_t keyboard_enc_read_buf () {
+static uint8_t keyboardEncReadBuf () {
 	return inb (INPUT_ENCODE_BUF);
 }
 
@@ -225,7 +225,7 @@ static bool isPrintable(uint8_t code){
 static void key_callback(registers_t regs)
 {
    //if you don't read from the buffer you won't get any more interrupts!
-	uint8_t code = keyboard_enc_read_buf ();
+	uint8_t code = keyboardEncReadBuf ();
 	//descriptor_writestring(code);
 
 
@@ -286,5 +286,5 @@ void registerKeyboardCallback(enum KEYBOARD_EVENT_TYPE type, void callback(char)
 
 void init_keyboard(){
 	asm volatile ("sti");
-	register_interrupt_handler(IRQ1, &key_callback);
+	registerInterruptHandler(IRQ1, &key_callback);
 }

@@ -20,7 +20,7 @@ void irqHandler(registers_t regs){
 	}
 }
 
-void register_interrupt_handler(uint8_t n, isr_t handler){
+void registerInterruptHandler(uint8_t n, isr_t handler){
 	irqUnmask(n);
 	interruptHandlers[n] = handler;
 }
