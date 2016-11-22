@@ -45,7 +45,7 @@ isr_common_stub:
 
 
 #In isr.c
-#[EXTERN irq_handler]
+#[EXTERN irqHandler]
 
 #This is our common IRQ stub. It saves the processor state, sets
 #up for kernel mode segments, calls the C-level fault handler,
@@ -59,7 +59,7 @@ irq_common_stub:
    mov %ax, %fs
    mov %ax, %gs
 
-   call irq_handler
+   call irqHandler
 
    popa                    #Pops edi,esi,ebp...
    add $8, %esp             #Cleans up the pushed error code and pushed ISR number

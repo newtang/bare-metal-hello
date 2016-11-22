@@ -25,5 +25,6 @@ void terminalPutChar(char);
 void terminalInitialize(enum vga_color fg, enum vga_color bg);
 void terminalWriteString(const char*);
 void terminalNewline();
+void terminalBackspace();
 
 #endif

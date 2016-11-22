@@ -42,6 +42,9 @@ static void onKeyDown(char code){
 			case KEY_RETURN:
 				terminalNewline();
 				break;
+			case KEY_BACKSPACE:
+				terminalBackspace();
+				break;
 		}
 	}
 }
