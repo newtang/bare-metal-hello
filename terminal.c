@@ -83,11 +83,16 @@ void terminalBackspace(){
 		terminalColumn = VGA_WIDTH-1;
 
 		bool charFound = false;
-		while(terminalColumn > 0){
+		while(true){
 			if (terminalBuffer[getIndex(terminalColumn, terminalRow)] != space) {
 				charFound = true;
 				break;
 			}
+
+			if(terminalColumn == 0){
+				break;
+			}
+
 			--terminalColumn;
 		}
 
