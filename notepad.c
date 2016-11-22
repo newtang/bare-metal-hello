@@ -4,6 +4,8 @@
 #include "terminal.h"
 #include "keyboard.h"
 
+//charsDown is for keeping track of the keys that are pressed down in order to show a mash message Not the most efficient way, but
+//I didn't want to include a hashtable
 static bool charsDown[256];
 static const uint8_t MAX_KEYS_DOWN = 6;
 static bool relaxMsg = false;
