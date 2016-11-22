@@ -4,11 +4,7 @@
 .set MEMINFO,  1<<1       # provide memory map
 .set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
 .set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header  #I am an elf file
-.set WORTHLESS, 0x00000011		#This does nothing.
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
-
-.section .worthless
-.long WORTHLESS
 
 # Declare a multiboot header that marks the program as a kernel. These are magic
 # values that are documented in the multiboot standard. The bootloader will
