@@ -13,7 +13,7 @@ static uint8_t totalDown = 0;
 
 static void onPrintableKeyDown(char c){
 	if(totalDown < MAX_KEYS_DOWN){
-		terminal_putchar(c);
+		terminalPutChar(c);
 	}
 }
 
@@ -29,7 +29,7 @@ static void onKeyDown(char code){
 
 	if(totalDown >= MAX_KEYS_DOWN){
 		if(!relaxMsg){
-			terminal_writestring(" Relax. It's going to be ok. ");
+			terminalWriteString(" Relax. It's going to be ok. ");
 			//debug("print relax: ");
 			//debug_int(totalDown);
 			relaxMsg = true;
@@ -40,7 +40,7 @@ static void onKeyDown(char code){
 		relaxMsg = false;
 		switch (code){
 			case KEY_RETURN:
-				terminal_newline();
+				terminalNewline();
 				break;
 		}
 	}
@@ -55,8 +55,8 @@ static void onKeyUp(char code){
 
 
 void notepad_init(){
-	terminal_initialize(VGA_COLOR_LIGHT_GREY, VGA_COLOR_RED);
-	terminal_writestring("You should type stuff> ");
+	terminalInitialize(VGA_COLOR_LIGHT_GREY, VGA_COLOR_RED);
+	terminalWriteString("You should type stuff> ");
 	registerKeyboardCallback(PRINTABLE_KEY_DOWN_EVENT, onPrintableKeyDown);
 	registerKeyboardCallback(KEY_DOWN_EVENT, onKeyDown);
 	registerKeyboardCallback(KEY_UP_EVENT, onKeyUp);

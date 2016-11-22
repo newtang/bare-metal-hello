@@ -26,7 +26,7 @@
  
 void isr_handler(registers_t regs)
 {
-   //terminal_writestring("received interrupt: ");
+   //terminalWriteString("received interrupt: ");
    //monitor_write_dec(regs.int_no);
    //monitor_put('\n');
 }
