@@ -1,6 +1,10 @@
 #ifndef TERMINAL_H   /* Include guard */
 #define TERMINAL_H
 
+/**
+Type def this
+**/
+
 /* Hardware text mode color constants. */
 enum vga_color {
 	VGA_COLOR_BLACK = 0,

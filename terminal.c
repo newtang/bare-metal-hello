@@ -83,20 +83,19 @@ void terminalBackspace(){
 		terminalColumn = VGA_WIDTH-1;
 
 		bool charFound = false;
-		while(true){
+		while(!charFound) {
 			if (terminalBuffer[getIndex(terminalColumn, terminalRow)] != space) {
 				charFound = true;
-				break;
+			} else {
+				if(terminalColumn == 0) {
+					break;
+				}
+				--terminalColumn;
 			}
-
-			if(terminalColumn == 0){
-				break;
-			}
-
-			--terminalColumn;
 		}
 
 		if(charFound){
+			//for purposes of putting the cursor one beyond the last character
 			++terminalColumn;
 		}
 	}

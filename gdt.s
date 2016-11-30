@@ -60,6 +60,7 @@ irq_common_stub:
    mov %ax, %gs
 
    call irqHandler
+   call endInterrupt
 
    popa                    #Pops edi,esi,ebp...
    add $8, %esp             #Cleans up the pushed error code and pushed ISR number
@@ -126,7 +127,7 @@ ISR_NOERRCODE 32
 .endm
 
 
-
+#MOVE INTERRUPT STUFF TO its own .s file
 
 
 #This macro creates a stub for an IRQ - the first parameter is

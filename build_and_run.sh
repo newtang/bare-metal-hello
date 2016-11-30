@@ -12,3 +12,6 @@ i686-elf-gcc -c terminal.c  -o output/terminal.o -std=gnu99 -ffreestanding -O2 -
 i686-elf-gcc -c notepad.c  -o output/notepad.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra;
 i686-elf-gcc -T linker.ld -o output/myos.bin -ffreestanding -O2 -nostdlib output/notepad.o output/keyboard.o output/interrupts.o output/descriptor_tables.o output/io.o output/debug.o output/terminal.o output/utils.o output/boot.o output/gdt.o output/kernel.o -lgcc;
 qemu-system-i386 -serial file:serial.log  -kernel output/myos.bin; #-serial file:serial.log
+
+
+#USE MAKE FILE

@@ -3,6 +3,7 @@
 #include "keyboard.h"
 #include "interrupts.h"
 #include "io.h"
+#include "asm.h"
 
 
 enum KEYBOARD_ENCODER_IO {
@@ -106,7 +107,6 @@ static uint8_t keyboardEncReadBuf () {
 	return inb (INPUT_ENCODE_BUF);
 }
 
-//bool shiftIsPressed = false;
 static uint8_t shiftIsPressed = 0;
 static const uint8_t RIGHT_SHIFT_MASK = 1;
 static const uint8_t LEFT_SHIFT_MASK = 2;
@@ -222,7 +222,8 @@ static bool isPrintable(uint8_t code){
 	return true;
 }
 
-static void key_callback(registers_t regs)
+//unused type registers_t
+static void key_callback()
 {
    //if you don't read from the buffer you won't get any more interrupts!
 	uint8_t code = keyboardEncReadBuf ();
@@ -232,12 +233,6 @@ static void key_callback(registers_t regs)
    // Send an EOI (end of interrupt) signal to the PICs.
    // If this interrupt involved the slave.
    // Send reset signal to master. (As well as slave, if necessary).
-   outb(0x20, 0x20);
-   if (regs.int_no >= 40)
-   {
-       // Send reset signal to slave.
-       outb(0xA0, 0x20);
-   }
 
    //! test if this is a break code (Original XT Scan Code Set specific)
    //break code is when a key is released
@@ -280,11 +275,11 @@ static void key_callback(registers_t regs)
 	}
 }
 
-void registerKeyboardCallback(enum KEYBOARD_EVENT_TYPE type, void callback(char)){
-	callbacks[(uint32_t)type] = callback;
+void registerKeyboardCallback(keyboard_event_t type, void callback(char)){
+	callbacks[type] = callback;
 }
 
 void init_keyboard(){
-	asm volatile ("sti");
+	enableInterrupts();
 	registerInterruptHandler(IRQ1, &key_callback);
 }
