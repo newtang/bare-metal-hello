@@ -10,7 +10,8 @@ typedef struct registers
    uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
 } __attribute__((packed)) registers_t;
 
-extern void irqHandler(registers_t regs);
+void irqHandler(registers_t regs);
+void endInterrupt (registers_t regs);
 
 // Enables registration of callbacks for interrupts or IRQs.
 // For IRQs, to ease confusion, use the #defines above as the

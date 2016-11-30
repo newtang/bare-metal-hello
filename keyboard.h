@@ -6,11 +6,11 @@
 void init_keyboard();
 
 
-enum KEYBOARD_EVENT_TYPE {
+typedef enum  {
 	PRINTABLE_KEY_DOWN_EVENT,
 	KEY_DOWN_EVENT,
 	KEY_UP_EVENT
-};
+} keyboard_event_t;
 
 enum KEYCODE {
 
@@ -164,6 +164,6 @@ enum KEYCODE {
 	KEY_NUMKEYCODES
 };
 
-void registerKeyboardCallback(enum KEYBOARD_EVENT_TYPE type, void callback(char));
+void registerKeyboardCallback(keyboard_event_t type, void callback(char));
 
 #endif

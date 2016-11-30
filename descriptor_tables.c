@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "utils.h"
-#include "io.h"
+#include "asm.h"
 #include "descriptor_tables.h"
 
 extern void gdt_flush(uint32_t);

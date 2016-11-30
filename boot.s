@@ -45,7 +45,7 @@ _start:
 	# state is as defined in the multiboot standard. The kernel has full
 	# control of the CPU. The kernel can only make use of hardware features
 	# and any code it provides as part of itself. There's no printf
-	# function, unless the kernel provides its own <stdio.h> header and a
+	# function, unless the kernel provides its own <stdasm.h> header and a
 	# printf implementation. There are no security restrictions, no
 	# safeguards, no debugging mechanisms, only what the kernel provides
 	# itself. It has absolute and complete power over the
@@ -83,7 +83,6 @@ _start:
 	#    Since they are disabled, this will lock up the computer.
 	# 3) Jump to the hlt instruction if it ever wakes up due to a
 	#    non-maskable interrupt occurring or due to system management mode.
-	cli
 1:	hlt
 	jmp 1b
 

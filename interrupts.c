@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "interrupts.h"
-#include "io.h"
+#include "asm.h"
 #define PIC1_DATA  0x21
 #define PIC2_DATA  0xA1
 
@@ -25,3 +25,10 @@ void registerInterruptHandler(uint8_t n, isr_t handler){
 	interruptHandlers[n] = handler;
 }
 
+void endInterrupt (registers_t regs){
+	outb(0x20, 0x20);
+	if (regs.int_no >= 40){
+		// Send reset signal to slave.
+		outb(0xA0, 0x20);
+	}
+} 
