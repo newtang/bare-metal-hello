@@ -1,8 +1,8 @@
 //from http://wiki.osdev.org/Bare_Bones
 //also from http://raw.knusbaum.com/jamesmolloy/tutorial_html/4.-The%20GDT%20and%20IDT.html
 
-/* Check if the compiler thinks we are targeting the wrong operating system. */
-#if defined(__linux__) //check for a hosted var instead of __linux__
+/* Checks to make sure we are not in a hosted environment */
+#if !defined(__STDC_HOSTED__) //check for a hosted var instead of __linux__
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
 #endif
  
