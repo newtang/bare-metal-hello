@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "utils.h"
 #include "debug.h"
-#include "io.h"
+#include "asm.h"
 
 void debug_int (uint8_t num){
 	int maxPos = 99;

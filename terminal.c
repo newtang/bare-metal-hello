@@ -2,11 +2,11 @@
 #include <stdbool.h> //built into the compiler /* C doesn't have booleans by default. *
 #include <stddef.h>
 #include <stdint.h>
-#include "io.h"
+#include "asm.h"
 #include "terminal.h"
 #include "utils.h"
 
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
+static inline uint8_t vga_entry_color(vga_color_t fg, vga_color_t bg) {
 	return fg | bg << 4;
 }
  
@@ -45,7 +45,7 @@ static void terminalPutEntryAt(char c, uint8_t color, size_t x, size_t y) {
 	terminalBuffer[index] = vga_entry(c, color);
 }
 
-void terminalInitialize(enum vga_color fg, enum vga_color bg) {
+void terminalInitialize(vga_color_t fg, vga_color_t bg) {
 	terminalRow = 0;
 	terminalColumn = 0;
 	terminalColor = vga_entry_color(fg, bg);

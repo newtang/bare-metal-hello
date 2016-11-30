@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "interrupts.h"
-#include "io.h"
+#include "asm.h"
 #define PIC1_DATA  0x21
 #define PIC2_DATA  0xA1
 

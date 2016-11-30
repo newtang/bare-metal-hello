@@ -6,7 +6,7 @@ Type def this
 **/
 
 /* Hardware text mode color constants. */
-enum vga_color {
+typedef enum {
 	VGA_COLOR_BLACK = 0,
 	VGA_COLOR_BLUE = 1,
 	VGA_COLOR_GREEN = 2,
@@ -23,10 +23,10 @@ enum vga_color {
 	VGA_COLOR_LIGHT_MAGENTA = 13,
 	VGA_COLOR_LIGHT_BROWN = 14,
 	VGA_COLOR_WHITE = 15,
-};
+} vga_color_t;
 
 void terminalPutChar(char);
-void terminalInitialize(enum vga_color fg, enum vga_color bg);
+void terminalInitialize(vga_color_t fg, vga_color_t bg);
 void terminalWriteString(const char*);
 void terminalNewline();
 void terminalBackspace();
